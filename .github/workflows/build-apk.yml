@@ -26,7 +26,20 @@ jobs:
       - name: Extract Android project
         run: |
           mkdir project
-          unzip -q HotelMaintenancePro-Android-Project.zip -d project
+          ZIP_FILE=$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: No ZIP file found"
+            exit 1
+          fi
+          echo "Found: $ZIP_FILE"
+          unzip -q "$ZIP_FILE" -d project
+          SETTINGS=$(find project -name settings.gradle -o -name settings.gradle.kts | head -n 1)
+          if [ -z "$SETTINGS" ]; then
+            echo "ERROR: Gradle settings file not found"
+            find project -maxdepth 3 -type f
+            exit 1
+          fi
+          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> "$GITHUB_ENV"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -35,13 +48,15 @@ jobs:
 
       - name: Build APK
         run: |
-          cd project/HotelMaintenancePro
+          cd "$PROJECT_DIR"
           gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Hotel-Maintenance-Pro-APK
-          path: project/HotelMaintenancePro/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+  
