@@ -38,7 +38,9 @@ jobs:
           fi
           PROJECT_DIR=$(dirname "$SETTINGS")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
+      - name: Set unique PRO package ID
+        run: |
+          sed -i "s/applicationId 'com.hmp.hotelmaintenance'/applicationId 'com.hmp.hotelmaintenance.pro'/" "$PROJECT_DIR/app/build.gradle"
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
